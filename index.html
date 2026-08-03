@@ -791,8 +791,6 @@ function renderExtra() {
       el.classList.toggle('active', state.bixia);
     }
     if (k === 'paoyi') {
-      el.querySelector ? null : null;
-      el.firstChild.textContent = state.mode==='jin' ? '跑一（底花10）' : '跑二（底花20）';
       el.innerHTML = state.mode==='jin' ? '跑一（底花10）' : '跑二（底花20）';
     }
     if (k === 'menqing') {
@@ -1161,7 +1159,7 @@ function confirmFa() {
 }
 
 function confirmLiu() {
-  const type = document.getElementById('liuType').value;
+  const type = document.getElementById('liuType');
   if (type === 'liu') {
     state.bixia = true;
     toast('✓ 流局，下局比下胡');
