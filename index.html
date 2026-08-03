@@ -447,6 +447,14 @@
         <input type="number" id="roundNum" value="1" min="1" style="width:60px">
         <label>局</label>
       </div>
+      <div class="setting-item">
+        <label>日期</label>
+        <input type="date" id="gameDate" style="width:130px">
+      </div>
+      <div class="setting-item">
+        <label>地点</label>
+        <input type="text" id="gameLocation" placeholder="如：老王茶馆" style="width:130px">
+      </div>
       <button class="btn btn-ghost btn-sm" onclick="resetAll()">↺ 重置</button>
     </div>
 
@@ -717,6 +725,8 @@ let state = {
   round: 1,
   unitPrice: 1,
   initScore: 100,
+  gameDate: '',
+  gameLocation: '',
   bixia: false, // 下局是否比下胡
   history: [],
   selectedFan: [],
@@ -737,6 +747,8 @@ function load() {
       state.selectedExtra = state.selectedExtra || {menqing:false, paoyi:false, bixiahu:false};
       state.selectedFan = state.selectedFan || [];
       if (!state.title) state.title = '🀄 南京麻将记分记账工作台';
+      if (!state.gameDate) state.gameDate = '';
+      if (!state.gameLocation) state.gameLocation = '';
     }
   } catch(e){}
 }
@@ -770,6 +782,8 @@ function renderPlayers() {
   document.getElementById('roundNum').value = state.round;
   document.getElementById('unitPrice').value = state.unitPrice;
   document.getElementById('initScore').value = state.initScore;
+  document.getElementById('gameDate').value = state.gameDate || '';
+  document.getElementById('gameLocation').value = state.gameLocation || '';
 }
 
 function renderFan() {
@@ -811,12 +825,19 @@ function renderHistory() {
       const cls = d>0?'pos':(d<0?'neg':'');
       return `<span class="${cls}">${escapeHtml(state.players[i].name)}: ${d>0?'+':''}${d.toFixed(0)}</span>`;
     }).join('');
+    const dateStr = h.date ? h.date : '';
+    const locStr = h.location ? escapeHtml(h.location) : '';
+    const metaParts = [];
+    if (dateStr) metaParts.push(dateStr);
+    if (locStr) metaParts.push(locStr);
+    const meta = metaParts.length ? `<span style="color:var(--purple); font-size:11px">📅 ${metaParts.join(' · ')}</span>` : '';
     return `
       <div class="history-item">
         <div class="h-head">
           <span>第${h.round}局 · ${h.title}</span>
           <span style="color:var(--text-light); font-weight:600">${h.amount>0?'¥'+h.amount.toFixed(1):'—'}</span>
         </div>
+        ${meta ? `<div style="margin-bottom:3px">${meta}</div>` : ''}
         <div class="h-detail">${escapeHtml(h.detail)}</div>
         <div class="h-scores">${scores}</div>
       </div>`;
@@ -1045,7 +1066,9 @@ function confirmHu() {
     title: wayText + ' · ' + winnerName,
     detail,
     deltas: deltas.slice(),
-    amount: money * (way==='zimo'||c.extraSel==='tianHu'||way==='dianBao' ? 3 : 1)
+    amount: money * (way==='zimo'||c.extraSel==='tianHu'||way==='dianBao' ? 3 : 1),
+    date: state.gameDate || '',
+    location: state.gameLocation || ''
   });
 
   // 庄家连庄/换庄：胡牌人若不是庄家则下局换庄；庄家胡牌连庄
@@ -1109,7 +1132,9 @@ function confirmGang() {
     title: '现场汇 · 杠',
     detail,
     deltas: deltas.slice(),
-    amount: Math.abs(deltas[who])
+    amount: Math.abs(deltas[who]),
+    date: state.gameDate || '',
+    location: state.gameLocation || ''
   });
 
   save();
@@ -1150,7 +1175,9 @@ function confirmFa() {
     title: '现场汇 · 罚分',
     detail,
     deltas: deltas.slice(),
-    amount: Math.abs(deltas[who])
+    amount: Math.abs(deltas[who]),
+    date: state.gameDate || '',
+    location: state.gameLocation || ''
   });
 
   save();
@@ -1213,13 +1240,23 @@ function exportHistory() {
   let text = `南京麻将记分记账记录\n`;
   text += `模式：${state.mode==='jin'?'进园子（门一跑一）':'敞开头（门二跑二）'}\n`;
   text += `单价：${state.unitPrice}元/花  起始分：${state.initScore}\n`;
+  if (state.gameDate) text += `日期：${state.gameDate}\n`;
+  if (state.gameLocation) text += `地点：${state.gameLocation}\n`;
   text += `${'='.repeat(40)}\n`;
   state.players.forEach((p,i) => {
     text += `${p.name}\t${p.score}\t${state.zhuang===i?'(庄)':''}\n`;
   });
   text += `${'='.repeat(40)}\n`;
   state.history.forEach(h => {
-    text += `\n【第${h.round}局】${h.title}\n`;
+    text += `\n【第${h.round}局】${h.title}`;
+    if (h.date || h.location) {
+      text += `  (`;
+      if (h.date) text += h.date;
+      if (h.date && h.location) text += ' · ';
+      if (h.location) text += h.location;
+      text += `)`;
+    }
+    text += `\n`;
     text += `  ${h.detail}\n`;
     text += `  变动：`;
     h.deltas.forEach((d,i) => { text += `${state.players[i].name}${d>=0?'+':''}${d.toFixed(0)}  `; });
@@ -1271,6 +1308,8 @@ function resetAll() {
   state.bixia = false;
   state.selectedFan = [];
   state.selectedExtra = {menqing:false, paoyi:false, bixiahu:false};
+  state.gameDate = '';
+  state.gameLocation = '';
   save();
   renderAll();
   updateCalc();
@@ -1295,6 +1334,14 @@ document.getElementById('zhuangSelect').addEventListener('change', e => {
 });
 document.getElementById('roundNum').addEventListener('change', e => {
   state.round = parseInt(e.target.value) || 1;
+  save();
+});
+document.getElementById('gameDate').addEventListener('change', e => {
+  state.gameDate = e.target.value;
+  save();
+});
+document.getElementById('gameLocation').addEventListener('change', e => {
+  state.gameLocation = e.target.value;
   save();
 });
 
