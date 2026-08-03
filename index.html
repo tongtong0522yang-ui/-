@@ -490,69 +490,118 @@
 
     <!-- 胡牌 -->
     <div id="panel-hu" class="action-panel">
-      <div class="form-grid">
-        <div class="form-group">
-          <div class="form-label">胡牌人</div>
-          <select id="huWinner"></select>
+      <!-- 算分模式切换 -->
+      <div class="sub-tabs" style="margin-bottom:10px">
+        <button class="sub-tab active" data-calc="auto" onclick="switchCalcMode('auto')">🧮 自动算分</button>
+        <button class="sub-tab" data-calc="manual" onclick="switchCalcMode('manual')">✍ 手动输入花数</button>
+      </div>
+
+      <!-- 自动算分面板 -->
+      <div id="calc-auto">
+        <div class="form-grid">
+          <div class="form-group">
+            <div class="form-label">胡牌人</div>
+            <select id="huWinner"></select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">胡牌方式</div>
+            <select id="huWay" onchange="updateCalc()">
+              <option value="zimo">自摸（三家付）</option>
+              <option value="dian">点炮（点炮人付1份）</option>
+              <option value="dianBao">点炮包牌（点炮人付3份）</option>
+            </select>
+          </div>
+          <div class="form-group" id="dianGroup" style="display:none">
+            <div class="form-label">点炮人</div>
+            <select id="huDian"></select>
+          </div>
         </div>
+
         <div class="form-group">
-          <div class="form-label">胡牌方式</div>
-          <select id="huWay" onchange="updateCalc()">
-            <option value="zimo">自摸（三家付）</option>
-            <option value="dian">点炮（点炮人付1份）</option>
-            <option value="dianBao">点炮包牌（点炮人付3份）</option>
-          </select>
+          <div class="form-label">牌型（可多选）</div>
+          <div class="fan-grid" id="fanGrid"></div>
         </div>
-        <div class="form-group" id="dianGroup" style="display:none">
-          <div class="form-label">点炮人</div>
-          <select id="huDian"></select>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <div class="form-label">硬花数</div>
+            <input type="number" id="hardFlower" value="0" min="0" oninput="updateCalc()">
+          </div>
+          <div class="form-group">
+            <div class="form-label">软花数</div>
+            <input type="number" id="softFlower" value="0" min="0" oninput="updateCalc()">
+          </div>
+          <div class="form-group">
+            <div class="form-label">杠上花等附加</div>
+            <select id="extraSelect" onchange="updateCalc()">
+              <option value="0">无</option>
+              <option value="xiaoGang">小杠开花</option>
+              <option value="daGang">大杠开花</option>
+              <option value="haidi">海底捞月</option>
+              <option value="diHu">地胡</option>
+              <option value="tianHu">天胡（直接成牌）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-label">附加项</div>
+          <div class="extra-grid" id="extraGrid">
+            <div class="extra-chip" data-extra="menqing" onclick="toggleExtra(this)">门清</div>
+            <div class="extra-chip" data-extra="paoyi" onclick="toggleExtra(this)">跑一/跑二（底花）</div>
+            <div class="extra-chip" data-extra="bixiahu" onclick="toggleExtra(this)">比下胡（×2）</div>
+          </div>
+        </div>
+
+        <div class="calc-box" id="calcBox">
+          <div class="calc-row"><span>牌型花数</span><span id="c-fan">0</span></div>
+          <div class="calc-row"><span>硬花×2 + 软花×2（花砸2）</span><span id="c-flower">0</span></div>
+          <div class="calc-row"><span>门清 / 底花</span><span id="c-men">0</span></div>
+          <div class="calc-row"><span>附加（杠开花/海底/地胡）</span><span id="c-extra">0</span></div>
+          <div class="calc-row"><span>比下胡</span><span id="c-bixia">×1</span></div>
+          <div class="calc-row total"><span>总花数</span><span class="val" id="c-total">0 花</span></div>
+          <div class="calc-row total"><span>胡牌金额</span><span class="val" id="c-money">¥0</span></div>
         </div>
       </div>
 
-      <div class="form-group">
-        <div class="form-label">牌型（可多选）</div>
-        <div class="fan-grid" id="fanGrid"></div>
-      </div>
+      <!-- 手动输入面板 -->
+      <div id="calc-manual" style="display:none">
+        <div class="form-grid">
+          <div class="form-group">
+            <div class="form-label">胡牌人</div>
+            <select id="huWinnerM"></select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">胡牌方式</div>
+            <select id="huWayM" onchange="updateManualCalc()">
+              <option value="zimo">自摸（三家付）</option>
+              <option value="dian">点炮（点炮人付1份）</option>
+              <option value="dianBao">点炮包牌（点炮人付3份）</option>
+            </select>
+          </div>
+          <div class="form-group" id="dianGroupM" style="display:none">
+            <div class="form-label">点炮人</div>
+            <select id="huDianM"></select>
+          </div>
+        </div>
 
-      <div class="form-grid-3">
-        <div class="form-group">
-          <div class="form-label">硬花数</div>
-          <input type="number" id="hardFlower" value="0" min="0" oninput="updateCalc()">
+        <div class="form-grid-3">
+          <div class="form-group">
+            <div class="form-label">我算的总花数</div>
+            <input type="number" id="manualFlower" value="0" min="0" oninput="updateManualCalc()" placeholder="如：17">
+          </div>
+          <div class="form-group">
+            <div class="form-label">说明（可选）</div>
+            <input type="text" id="manualNote" placeholder="如：对对胡17花">
+          </div>
         </div>
-        <div class="form-group">
-          <div class="form-label">软花数</div>
-          <input type="number" id="softFlower" value="0" min="0" oninput="updateCalc()">
-        </div>
-        <div class="form-group">
-          <div class="form-label">杠上花等附加</div>
-          <select id="extraSelect" onchange="updateCalc()">
-            <option value="0">无</option>
-            <option value="xiaoGang">小杠开花</option>
-            <option value="daGang">大杠开花</option>
-            <option value="haidi">海底捞月</option>
-            <option value="diHu">地胡</option>
-            <option value="tianHu">天胡（直接成牌）</option>
-          </select>
-        </div>
-      </div>
 
-      <div class="form-group">
-        <div class="form-label">附加项</div>
-        <div class="extra-grid" id="extraGrid">
-          <div class="extra-chip" data-extra="menqing" onclick="toggleExtra(this)">门清</div>
-          <div class="extra-chip" data-extra="paoyi" onclick="toggleExtra(this)">跑一/跑二（底花）</div>
-          <div class="extra-chip" data-extra="bixiahu" onclick="toggleExtra(this)">比下胡（×2）</div>
+        <div class="calc-box" id="manualCalcBox">
+          <div class="calc-row"><span>输入花数</span><span id="m-input">0</span></div>
+          <div class="calc-row"><span>比下胡</span><span id="m-bixia">×1</span></div>
+          <div class="calc-row total"><span>结算总花数</span><span class="val" id="m-total">0 花</span></div>
+          <div class="calc-row total"><span>胡牌金额</span><span class="val" id="m-money">¥0</span></div>
         </div>
-      </div>
-
-      <div class="calc-box" id="calcBox">
-        <div class="calc-row"><span>牌型花数</span><span id="c-fan">0</span></div>
-        <div class="calc-row"><span>硬花×2 + 软花×2（花砸2）</span><span id="c-flower">0</span></div>
-        <div class="calc-row"><span>门清 / 底花</span><span id="c-men">0</span></div>
-        <div class="calc-row"><span>附加（杠开花/海底/地胡）</span><span id="c-extra">0</span></div>
-        <div class="calc-row"><span>比下胡</span><span id="c-bixia">×1</span></div>
-        <div class="calc-row total"><span>总花数</span><span class="val" id="c-total">0 花</span></div>
-        <div class="calc-row total"><span>胡牌金额</span><span class="val" id="c-money">¥0</span></div>
       </div>
 
       <div style="margin-top:12px; text-align:right">
@@ -774,7 +823,7 @@ function renderPlayers() {
 
   // 同步下拉
   const opts = state.players.map((p,i)=>`<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
-  ['huWinner','huDian','gangWho','gangTarget','faWho','zhuangSelect'].forEach(id=>{
+  ['huWinner','huWinnerM','huDian','huDianM','gangWho','gangTarget','faWho','zhuangSelect'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
@@ -900,11 +949,38 @@ function setQuickPrice(p) {
 }
 
 function switchAction(a) {
-  document.querySelectorAll('.sub-tab').forEach(el => el.classList.toggle('active', el.dataset.action === a));
+  document.querySelectorAll('.sub-tab[data-action]').forEach(el => el.classList.toggle('active', el.dataset.action === a));
   document.querySelectorAll('.action-panel').forEach(el => el.style.display = 'none');
   document.getElementById('panel-' + a).style.display = 'block';
   // 点炮显示
   updateDianVisible();
+}
+
+// 算分模式切换：自动 / 手动
+let calcMode = 'auto'; // 'auto' 或 'manual'
+function switchCalcMode(m) {
+  calcMode = m;
+  document.querySelectorAll('.sub-tab[data-calc]').forEach(el => el.classList.toggle('active', el.dataset.calc === m));
+  document.getElementById('calc-auto').style.display = (m === 'auto') ? 'block' : 'none';
+  document.getElementById('calc-manual').style.display = (m === 'manual') ? 'block' : 'none';
+  if (m === 'manual') {
+    updateManualCalc();
+  } else {
+    updateCalc();
+  }
+}
+
+// 手动模式计算
+function updateManualCalc() {
+  const way = document.getElementById('huWayM').value;
+  document.getElementById('dianGroupM').style.display = (way==='dian' || way==='dianBao') ? 'block' : 'none';
+  const inputFlower = parseInt(document.getElementById('manualFlower').value) || 0;
+  const bixia = state.bixia;
+  const total = bixia ? inputFlower * 2 : inputFlower;
+  document.getElementById('m-input').textContent = inputFlower + ' 花';
+  document.getElementById('m-bixia').textContent = bixia ? '×2' : '×1';
+  document.getElementById('m-total').textContent = total + ' 花';
+  document.getElementById('m-money').textContent = '¥' + (total * state.unitPrice).toFixed(1);
 }
 
 function updateDianVisible() {
@@ -999,52 +1075,71 @@ function updateCalc() {
 
 /* ================== 结算提交 ================== */
 function confirmHu() {
-  const winnerIdx = parseInt(document.getElementById('huWinner').value);
-  const way = document.getElementById('huWay').value;
-  const c = calcHu();
-  if (c.total === 0 && c.extraSel !== 'tianHu') {
-    toast('请选择牌型或输入花数');
-    return;
+  let winnerIdx, way, total, wayText, detailStr, isBigHu = false;
+
+  if (calcMode === 'manual') {
+    // 手动输入模式
+    winnerIdx = parseInt(document.getElementById('huWinnerM').value);
+    way = document.getElementById('huWayM').value;
+    const inputFlower = parseInt(document.getElementById('manualFlower').value) || 0;
+    if (inputFlower === 0) { toast('请输入花数'); return; }
+    const bixia = state.bixia;
+    total = bixia ? inputFlower * 2 : inputFlower;
+    const note = document.getElementById('manualNote').value;
+    wayText = way==='zimo'?'自摸':(way==='dian'?'点炮':'点炮包牌');
+    const parts = [];
+    if (note) parts.push(note);
+    parts.push(`手动${inputFlower}花`);
+    if (bixia) parts.push('比下胡×2');
+    detailStr = parts.join(' / ');
+  } else {
+    // 自动算分模式
+    winnerIdx = parseInt(document.getElementById('huWinner').value);
+    way = document.getElementById('huWay').value;
+    const c = calcHu();
+    if (c.total === 0 && c.extraSel !== 'tianHu') { toast('请选择牌型或输入花数'); return; }
+    total = c.total;
+    wayText = way==='zimo'?'自摸':(way==='dian'?'点炮':'点炮包牌');
+    let detailParts = [];
+    const fanNames = state.selectedFan.map(k => FAN_TYPES[state.mode].find(x=>x.key===k).name).join('+');
+    if (fanNames) detailParts.push(fanNames);
+    if (c.flowerVal > 0) {
+      const hard = document.getElementById('hardFlower').value;
+      const soft = document.getElementById('softFlower').value;
+      detailParts.push(`硬${hard}软${soft}花砸2=${c.flowerVal}花`);
+    }
+    if (c.menVal > 0) detailParts.push(state.selectedExtra.menqing ? (state.mode==='jin'?'门一+10':'门二+20') : '');
+    if (state.selectedExtra.paoyi) detailParts.push(state.mode==='jin'?'跑一+10':'跑二+20');
+    if (c.extraVal > 0 || c.extraSel==='daGang') {
+      const map = {xiaoGang:'小杠开花',daGang:'大杠开花',haidi:'海底捞月',diHu:'地胡',tianHu:'天胡'};
+      detailParts.push(map[c.extraSel] || '');
+    }
+    if (c.bixia) detailParts.push('比下胡×2');
+    detailStr = detailParts.filter(Boolean).join(' / ');
+    // 比下胡触发判断
+    const fanKeys = state.selectedFan;
+    isBigHu = fanKeys.some(k => ['qingyise','duidui','qudu','qidui','shuangqi','haohua','chaohaohua','hunyise','yajue','wuhuaguo'].includes(k));
+    const isGangHua = c.extraSel === 'xiaoGang' || c.extraSel === 'daGang';
+    if (isBigHu || isGangHua || c.extraSel === 'tianHu' || c.extraSel === 'diHu') {
+      state.bixia = true;
+    }
   }
-  const money = c.total * state.unitPrice;
+
+  const money = total * state.unitPrice;
   const deltas = [0,0,0,0];
   const winnerName = state.players[winnerIdx].name;
 
-  let detailParts = [];
-  const fanNames = state.selectedFan.map(k => FAN_TYPES[state.mode].find(x=>x.key===k).name).join('+');
-  if (fanNames) detailParts.push(fanNames);
-  if (c.flowerVal > 0) {
-    const hard = document.getElementById('hardFlower').value;
-    const soft = document.getElementById('softFlower').value;
-    detailParts.push(`硬${hard}软${soft}花砸2=${c.flowerVal}花`);
-  }
-  if (c.menVal > 0) detailParts.push(state.selectedExtra.menqing ? (state.mode==='jin'?'门一+10':'门二+20') : '');
-  if (state.selectedExtra.paoyi) detailParts.push(state.mode==='jin'?'跑一+10':'跑二+20');
-  if (c.extraVal > 0 || c.extraSel==='daGang') {
-    const map = {xiaoGang:'小杠开花',daGang:'大杠开花',haidi:'海底捞月',diHu:'地胡',tianHu:'天胡'};
-    detailParts.push(map[c.extraSel] || '');
-  }
-  if (c.bixia) detailParts.push('比下胡×2');
-
-  const wayText = way==='zimo'?'自摸':(way==='dian'?'点炮':'点炮包牌');
-
-  if (way === 'zimo' || c.extraSel === 'tianHu') {
-    // 自摸：三家各付1份
+  if (way === 'zimo') {
     for (let i = 0; i < 4; i++) {
-      if (i === winnerIdx) {
-        deltas[i] = money * 3;
-      } else {
-        deltas[i] = -money;
-      }
+      if (i === winnerIdx) deltas[i] = money * 3;
+      else deltas[i] = -money;
     }
   } else if (way === 'dian') {
-    // 点炮：点炮人付1份
-    const dianIdx = parseInt(document.getElementById('huDian').value);
+    const dianIdx = parseInt(document.getElementById(calcMode==='manual'?'huDianM':'huDian').value);
     deltas[winnerIdx] = money;
     deltas[dianIdx] = -money;
   } else if (way === 'dianBao') {
-    // 包牌：点炮人付3份
-    const dianIdx = parseInt(document.getElementById('huDian').value);
+    const dianIdx = parseInt(document.getElementById(calcMode==='manual'?'huDianM':'huDian').value);
     deltas[winnerIdx] = money * 3;
     deltas[dianIdx] = -money * 3;
   }
@@ -1052,30 +1147,21 @@ function confirmHu() {
   // 应用积分
   for (let i = 0; i < 4; i++) state.players[i].score += deltas[i];
 
-  // 比下胡触发判断
-  const fanKeys = state.selectedFan;
-  const isBigHu = fanKeys.some(k => ['qingyise','duidui','qudu','qidui','shuangqi','haohua','chaohaohua','hunyise','yajue','wuhuaguo'].includes(k));
-  const isGangHua = c.extraSel === 'xiaoGang' || c.extraSel === 'daGang';
-  if (isBigHu || isGangHua || c.extraSel === 'tianHu' || c.extraSel === 'diHu') {
-    state.bixia = true; // 大胡后下局比下胡
-  }
-
-  const detail = `${winnerName} ${wayText} [${detailParts.filter(Boolean).join(' / ')}] = ${c.total}花 × ${state.unitPrice}元`;
+  const detail = `${winnerName} ${wayText} [${detailStr}] = ${total}花 × ${state.unitPrice}元`;
   state.history.push({
     round: state.round,
     title: wayText + ' · ' + winnerName,
     detail,
     deltas: deltas.slice(),
-    amount: money * (way==='zimo'||c.extraSel==='tianHu'||way==='dianBao' ? 3 : 1),
+    amount: money * (way==='zimo'||way==='dianBao' ? 3 : 1),
     date: state.gameDate || '',
     location: state.gameLocation || ''
   });
 
-  // 庄家连庄/换庄：胡牌人若不是庄家则下局换庄；庄家胡牌连庄
+  // 庄家连庄/换庄
   if (winnerIdx !== state.zhuang) {
     state.zhuang = winnerIdx;
   }
-  // 自摸或大胡，庄家连庄；闲家胡牌则换庄已在上面处理
   state.round++;
 
   // 重置选择
