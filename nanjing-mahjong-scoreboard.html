@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>南京麻将记分记账工作台</title>
+<style>
+  :root {
+    --pink: #FFB7C5;
+    --pink-soft: #FFD6E0;
+    --mint: #B5EAD7;
+    --mint-soft: #D4F0E5;
+    --blue: #AEC6CF;
+    --blue-soft: #CFE3EB;
+    --yellow: #FDFD96;
+    --yellow-soft: #FEF3B0;
+    --purple: #C3B1E1;
+    --purple-soft: #DDD0EE;
+    --orange: #FFDAC1;
+    --cream: #FFF8F0;
+    --text: #5A4A6A;
+    --text-light: #8A7A9A;
+    --shadow: 0 8px 24px rgba(180, 160, 200, 0.25);
+    --shadow-sm: 0 4px 12px rgba(180, 160, 200, 0.18);
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: linear-gradient(135deg, #FFE5EC 0%, #E8F5E9 35%, #E5ECFF 70%, #F3E8FF 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: var(--text);
+    padding: 16px;
+    line-height: 1.5;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* 顶部标题 */
+  .header {
+    text-align: center;
+    padding: 18px 16px 10px;
+  }
+  .header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0 rgba(255,255,255,0.6);
+    outline: none;
+    padding: 4px 14px;
+    border-radius: 12px;
+    border: 1.5px dashed transparent;
+    transition: all 0.2s;
+    cursor: text;
+    position: relative;
+  }
+  .header h1:hover { border-color: var(--purple-soft); background: rgba(255,255,255,0.5); }
+  .header h1:focus { border-color: var(--purple); background: #fff; }
+  .header .edit-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; opacity: 0.7; }
+  .header .subtitle {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-top: 4px;
+  }
+
+  /* 模式切换 Tab */
+  .mode-tabs {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 14px 0;
+  }
+  .mode-tab {
+    flex: 1;
+    max-width: 200px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: rgba(255,255,255,0.6);
+    color: var(--text-light);
+    transition: all 0.25s;
+    box-shadow: var(--shadow-sm);
+  }
+  .mode-tab.active.mode-jin { background: linear-gradient(135deg, var(--mint), var(--mint-soft)); color: #2E6B52; }
+  .mode-tab.active.mode-chang { background: linear-gradient(135deg, var(--pink), var(--pink-soft)); color: #8B3A52; }
+  .mode-tab:hover { transform: translateY(-2px); }
+
+  /* 卡片通用 */
+  .card {
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 16px;
+    border: 1.5px solid rgba(255,255,255,0.9);
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* 设置行 */
+  .setting-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+  }
+  .setting-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+  .setting-item label { color: var(--text-light); white-space: nowrap; }
+  .setting-item input, .setting-item select {
+    width: 90px;
+    padding: 7px 10px;
+    border: 1.5px solid var(--blue);
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+  }
+  .setting-item input:focus { border-color: var(--purple); }
+
+  /* 玩家卡片 */
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .player-card {
+    background: linear-gradient(135deg, #fff, #FFF8FB);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    border: 2px solid transparent;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    transition: all 0.2s;
+  }
+  .player-card.p0 { border-color: var(--pink); }
+  .player-card.p1 { border-color: var(--mint); }
+  .player-card.p2 { border-color: var(--blue); }
+  .player-card.p3 { border-color: var(--yellow); }
+  .player-name-input {
+    text-align: center;
+    border: 1.5px dashed transparent;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    margin-bottom: 4px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    cursor: text;
+  }
+  .player-name-input:hover { border-color: var(--purple-soft); background: rgba(255,255,255,0.6); }
+  .player-name-input:focus { border-color: var(--purple); background: #fff; }
+  .player-card .name-edit-icon { font-size: 11px; color: var(--text-light); opacity: 0.6; }
+  .player-score {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 4px 0;
+  }
+  .player-card.p0 .player-score { color: #B8426B; }
+  .player-card.p1 .player-score { color: #2E8B6B; }
+  .player-card.p2 .player-score { color: #3A6B8B; }
+  .player-card.p3 .player-score { color: #B8902E; }
+  .player-tags { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; min-height: 22px; }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .tag-zhuang { background: var(--yellow); color: #6B4A0E; }
+  .tag-yuan { background: #FF9E9E; color: #fff; }
+  .tag-chang { background: var(--purple); color: #fff; }
+
+  /* 按钮组 */
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--blue-soft);
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .btn-primary { background: linear-gradient(135deg, var(--purple), var(--pink)); color: #fff; }
+  .btn-mint { background: var(--mint); color: #2E6B52; }
+  .btn-pink { background: var(--pink); color: #8B3A52; }
+  .btn-yellow { background: var(--yellow); color: #6B4A0E; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-danger { background: #FFB3B3; color: #8B1A1A; }
+  .btn-ghost { background: rgba(255,255,255,0.6); color: var(--text-light); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+  .quick-price.active {
+    box-shadow: 0 0 0 3px rgba(195,177,225,0.5);
+    transform: translateY(-1px);
+    font-weight: 800;
+  }
+
+  /* 子 Tab */
+  .sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .sub-tab {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: rgba(255,255,255,0.6);
+    color: var(--text-light);
+  }
+  .sub-tab.active { background: var(--purple); color: #fff; }
+
+  /* 表单 */
+  .form-group { margin-bottom: 12px; }
+  .form-label {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  select, input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--blue);
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+  }
+  select:focus, input:focus { border-color: var(--purple); }
+
+  /* 牌型多选 */
+  .fan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .fan-chip {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background: rgba(255,255,255,0.7);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .fan-chip .flower { font-size: 11px; color: var(--text-light); display: block; }
+  .fan-chip.active { background: var(--purple-soft); border-color: var(--purple); color: #5A3A8B; font-weight: 700; }
+  .fan-chip.active .flower { color: #7A5AAB; }
+
+  /* 附加项复选 */
+  .extra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .extra-chip {
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.7);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    border: 2px solid transparent;
+    user-select: none;
+  }
+  .extra-chip.active { background: var(--mint-soft); border-color: var(--mint); color: #2E6B52; font-weight: 700; }
+
+  /* 计算结果展示 */
+  .calc-box {
+    background: linear-gradient(135deg, var(--cream), #FFF0E5);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 12px;
+    border: 1.5px dashed var(--orange);
+  }
+  .calc-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 3px 0;
+    color: var(--text-light);
+  }
+  .calc-row.total {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    border-top: 1.5px solid var(--orange);
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+  .calc-row.total .val { color: #C0392B; font-size: 20px; }
+
+  /* 历史记录 */
+  .history-item {
+    background: rgba(255,255,255,0.7);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-left: 4px solid var(--purple);
+    font-size: 13px;
+  }
+  .history-item .h-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+  .history-item .h-detail { color: var(--text-light); font-size: 12px; }
+  .history-item .h-scores { display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
+  .history-item .h-scores span { font-size: 12px; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,0.7); }
+  .history-item .h-scores .pos { color: #2E8B6B; }
+  .history-item .h-scores .neg { color: #C0392B; }
+  .history-empty { text-align: center; color: var(--text-light); padding: 20px; font-size: 13px; }
+
+  /* 弹窗 */
+  .modal-mask {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(90, 74, 106, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 20px;
+    padding: 22px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal h3 { font-size: 18px; margin-bottom: 14px; text-align: center; }
+  .settle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 6px;
+    background: var(--cream);
+  }
+  .settle-row .name { font-weight: 700; }
+  .settle-row .amount { font-size: 18px; font-weight: 800; }
+  .settle-row.win { background: var(--mint-soft); }
+  .settle-row.lose { background: var(--pink-soft); }
+  .settle-row.win .amount { color: #2E8B6B; }
+  .settle-row.lose .amount { color: #C0392B; }
+
+  /* 规则速查 */
+  .rule-box {
+    background: linear-gradient(135deg, #F5F0FF, #FFF0F5);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: var(--text-light);
+    line-height: 1.7;
+  }
+  .rule-box b { color: var(--text); }
+  .rule-box .rule-sec { margin-bottom: 6px; }
+
+  /* 提示 */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(90,74,106,0.92); color: #fff;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px;
+    z-index: 200; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* 响应式 */
+  @media (max-width: 720px) {
+    .players-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+    .header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1 id="mainTitle" contenteditable="true" spellcheck="false" title="点击可编辑标题">🀄 南京麻将记分记账工作台</h1>
+    <div class="edit-hint">✎ 点击标题可修改工作台名称</div>
+    <div class="subtitle">进园子 · 敞开头 ｜ 马卡龙记分板</div>
+  </div>
+
+  <!-- 模式切换 -->
+  <div class="mode-tabs">
+    <button class="mode-tab mode-jin active" data-mode="jin" onclick="switchMode('jin')">🌸 进园子（门一跑一）</button>
+    <button class="mode-tab mode-chang" data-mode="chang" onclick="switchMode('chang')">🌷 敞开头（456起胡）</button>
+  </div>
+
+  <!-- 设置 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--purple)"></span>基础设置</div>
+    <div class="setting-row">
+      <div class="setting-item">
+        <label>1花 =</label>
+        <input type="number" id="unitPrice" value="1" min="0" step="0.5"> 元
+      </div>
+      <div class="setting-item">
+        <label>起始分</label>
+        <input type="number" id="initScore" value="100" min="0" step="10">
+      </div>
+      <div class="setting-item">
+        <label>当前庄家</label>
+        <select id="zhuangSelect">
+          <option value="0">玩家1</option>
+          <option value="1">玩家2</option>
+          <option value="2">玩家3</option>
+          <option value="3">玩家4</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <label>第</label>
+        <input type="number" id="roundNum" value="1" min="1" style="width:60px">
+        <label>局</label>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="resetAll()">↺ 重置</button>
+    </div>
+
+    <!-- 进园子快捷金额 -->
+    <div id="quickPriceRow" class="setting-row" style="margin-top:12px">
+      <div class="setting-item">
+        <label>快捷金额（1花单价）：</label>
+      </div>
+      <button class="btn btn-sm btn-pink quick-price" data-price="20" onclick="setQuickPrice(20)">¥20</button>
+      <button class="btn btn-sm btn-mint quick-price" data-price="50" onclick="setQuickPrice(50)">¥50</button>
+      <button class="btn btn-sm btn-yellow quick-price" data-price="100" onclick="setQuickPrice(100)">¥100</button>
+      <button class="btn btn-sm btn-blue quick-price" data-price="200" onclick="setQuickPrice(200)">¥200</button>
+      <button class="btn btn-sm btn-ghost quick-price" data-price="0.5" onclick="setQuickPrice(0.5)">¥0.5</button>
+    </div>
+
+    </div>
+
+  <!-- 玩家 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--pink)"></span>玩家积分</div>
+    <div class="players-grid" id="playersGrid"></div>
+  </div>
+
+  <!-- 操作区 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--mint)"></span>本局记分</div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-action="hu" onclick="switchAction('hu')">胡牌</button>
+      <button class="sub-tab" data-action="gang" onclick="switchAction('gang')">杠（现场汇）</button>
+      <button class="sub-tab" data-action="fa" onclick="switchAction('fa')">罚分</button>
+      <button class="sub-tab" data-action="liu" onclick="switchAction('liu')">流局/比下胡</button>
+    </div>
+
+    <!-- 胡牌 -->
+    <div id="panel-hu" class="action-panel">
+      <div class="form-grid">
+        <div class="form-group">
+          <div class="form-label">胡牌人</div>
+          <select id="huWinner"></select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">胡牌方式</div>
+          <select id="huWay" onchange="updateCalc()">
+            <option value="zimo">自摸（三家付）</option>
+            <option value="dian">点炮（点炮人付1份）</option>
+            <option value="dianBao">点炮包牌（点炮人付3份）</option>
+          </select>
+        </div>
+        <div class="form-group" id="dianGroup" style="display:none">
+          <div class="form-label">点炮人</div>
+          <select id="huDian"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">牌型（可多选）</div>
+        <div class="fan-grid" id="fanGrid"></div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <div class="form-label">硬花数</div>
+          <input type="number" id="hardFlower" value="0" min="0" oninput="updateCalc()">
+        </div>
+        <div class="form-group">
+          <div class="form-label">软花数</div>
+          <input type="number" id="softFlower" value="0" min="0" oninput="updateCalc()">
+        </div>
+        <div class="form-group">
+          <div class="form-label">杠上花等附加</div>
+          <select id="extraSelect" onchange="updateCalc()">
+            <option value="0">无</option>
+            <option value="xiaoGang">小杠开花</option>
+            <option value="daGang">大杠开花</option>
+            <option value="haidi">海底捞月</option>
+            <option value="diHu">地胡</option>
+            <option value="tianHu">天胡（直接成牌）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">附加项</div>
+        <div class="extra-grid" id="extraGrid">
+          <div class="extra-chip" data-extra="menqing" onclick="toggleExtra(this)">门清</div>
+          <div class="extra-chip" data-extra="paoyi" onclick="toggleExtra(this)">跑一/跑二（底花）</div>
+          <div class="extra-chip" data-extra="bixiahu" onclick="toggleExtra(this)">比下胡（×2）</div>
+        </div>
+      </div>
+
+      <div class="calc-box" id="calcBox">
+        <div class="calc-row"><span>牌型花数</span><span id="c-fan">0</span></div>
+        <div class="calc-row"><span>硬花×2 + 软花×2（花砸2）</span><span id="c-flower">0</span></div>
+        <div class="calc-row"><span>门清 / 底花</span><span id="c-men">0</span></div>
+        <div class="calc-row"><span>附加（杠开花/海底/地胡）</span><span id="c-extra">0</span></div>
+        <div class="calc-row"><span>比下胡</span><span id="c-bixia">×1</span></div>
+        <div class="calc-row total"><span>总花数</span><span class="val" id="c-total">0 花</span></div>
+        <div class="calc-row total"><span>胡牌金额</span><span class="val" id="c-money">¥0</span></div>
+      </div>
+
+      <div style="margin-top:12px; text-align:right">
+        <button class="btn btn-primary" onclick="confirmHu()">✓ 确认胡牌结算</button>
+      </div>
+    </div>
+
+    <!-- 杠 -->
+    <div id="panel-gang" class="action-panel" style="display:none">
+      <div class="form-grid-3">
+        <div class="form-group">
+          <div class="form-label">谁杠</div>
+          <select id="gangWho"></select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">杠类型</div>
+          <select id="gangType">
+            <option value="ming">明杠（被杠者付10花）</option>
+            <option value="an">暗杠（三家各付5花）</option>
+            <option value="hua">花杠（三家各付10花）</option>
+          </select>
+        </div>
+        <div class="form-group" id="gangTargetGroup">
+          <div class="form-label">被杠者（明杠时选）</div>
+          <select id="gangTarget"></select>
+        </div>
+      </div>
+      <div style="margin-top:8px; text-align:right">
+        <button class="btn btn-mint" onclick="confirmGang()">✓ 确认杠结算</button>
+      </div>
+    </div>
+
+    <!-- 罚分 -->
+    <div id="panel-fa" class="action-panel" style="display:none">
+      <div class="form-group">
+        <div class="form-label">罚分类型</div>
+        <select id="faType">
+          <option value="same4">四家同牌（首出者付三家各5花）</option>
+          <option value="feng">东南西北（收者得三家各5花）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">首出 / 收牌人</div>
+        <select id="faWho"></select>
+      </div>
+      <div style="margin-top:8px; text-align:right">
+        <button class="btn btn-yellow" onclick="confirmFa()">✓ 确认罚分</button>
+      </div>
+    </div>
+
+    <!-- 流局 -->
+    <div id="panel-liu" class="action-panel" style="display:none">
+      <div class="form-group">
+        <div class="form-label">操作</div>
+        <select id="liuType">
+          <option value="liu">流局（下局比下胡）</option>
+          <option value="lianzhuang">庄家连庄（下局比下胡）</option>
+          <option value="clearBixia">取消比下胡标记</option>
+        </select>
+      </div>
+      <div style="margin-top:8px; text-align:right">
+        <button class="btn btn-blue" onclick="confirmLiu()">✓ 确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 比下胡提示 -->
+  <div class="card" id="bixiaCard" style="display:none">
+    <div class="card-title"><span class="dot" style="background:#FF9E9E"></span>⚠ 下局为比下胡（总花数×2）</div>
+    <div style="font-size:13px; color:var(--text-light)">本局结算时将自动翻倍。完成后请点击下方按钮取消标记。</div>
+    <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="clearBixia()">已结算，取消标记</button>
+  </div>
+
+  <!-- 历史记录 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dot" style="background:var(--blue)"></span>历史记录
+      <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="exportHistory()">导出文本</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- 结算 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--orange)"></span>结算中心</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="showSettle()">📊 查看最终结算</button>
+      <button class="btn btn-mint" onclick="nextRound()">▶ 下一局（庄家顺延）</button>
+    </div>
+    <div class="rule-box" style="margin-top:10px">
+      <div class="rule-sec"><b>💡 提示：</b>每局结算后积分自动变动；"下一局"会把庄家顺延到下一位玩家。</div>
+    </div>
+  </div>
+
+  <!-- 规则速查 -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--yellow)"></span>📖 南京麻将规则速查</div>
+    <div class="rule-box" id="ruleBox"></div>
+  </div>
+
+</div>
+
+<!-- 结算弹窗 -->
+<div class="modal-mask" id="settleModal">
+  <div class="modal">
+    <h3>📊 最终结算</h3>
+    <div id="settleBody"></div>
+    <div style="text-align:center; margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal('settleModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出弹窗 -->
+<div class="modal-mask" id="exportModal">
+  <div class="modal">
+    <h3>📋 历史记录文本</h3>
+    <textarea id="exportText" style="width:100%; height:300px; padding:10px; border-radius:10px; border:1.5px solid var(--blue); font-size:12px; font-family:monospace"></textarea>
+    <div style="text-align:center; margin-top:10px">
+      <button class="btn btn-primary" onclick="copyExport()">复制</button>
+      <button class="btn btn-ghost" onclick="closeModal('exportModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================== 数据 ================== */
+const STORAGE_KEY = 'nj_mahjong_scoreboard_v1';
+
+// 牌型花数定义
+const FAN_TYPES = {
+  jin: [ // 进园子
+    {key:'hunyise', name:'混一色', flower:20},
+    {key:'duidui', name:'对对胡', flower:20},
+    {key:'yajue', name:'压绝', flower:20},
+    {key:'wuhuaguo', name:'无花果', flower:20},
+    {key:'qingyise', name:'清一色', flower:30},
+    {key:'qudu', name:'全球独钓', flower:30},
+    {key:'qidui', name:'七对', flower:30},
+    {key:'shuangqi', name:'双七对', flower:80},
+    {key:'haohua', name:'豪华双七对', flower:120},
+    {key:'chaohaohua', name:'超豪华双七对', flower:160}
+  ],
+  chang: [ // 敞开头456：混一色40 / 清一色50 / 七对60 为基准
+    {key:'hunyise', name:'混一色', flower:40},
+    {key:'duidui', name:'对对胡', flower:40},
+    {key:'yajue', name:'压绝', flower:60},
+    {key:'wuhuaguo', name:'无花果', flower:40},
+    {key:'qingyise', name:'清一色', flower:50},
+    {key:'qudu', name:'全球独钓', flower:50},
+    {key:'qidui', name:'七对', flower:60},
+    {key:'shuangqi', name:'双七对', flower:120},
+    {key:'haohua', name:'豪华双七对', flower:180},
+    {key:'chaohaohua', name:'超豪华双七对', flower:240}
+  ]
+};
+
+let state = {
+  title: '🀄 南京麻将记分记账工作台',
+  mode: 'jin',
+  players: [
+    {name: '玩家1', score: 100, inYuan: false},
+    {name: '玩家2', score: 100, inYuan: false},
+    {name: '玩家3', score: 100, inYuan: false},
+    {name: '玩家4', score: 100, inYuan: false}
+  ],
+  zhuang: 0,
+  round: 1,
+  unitPrice: 1,
+  initScore: 100,
+  bixia: false, // 下局是否比下胡
+  history: [],
+  selectedFan: [],
+  selectedExtra: {menqing:false, paoyi:false, bixiahu:false}
+};
+
+/* ================== 持久化 ================== */
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function load() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) {
+      const obj = JSON.parse(s);
+      state = Object.assign(state, obj);
+      // 确保selectedExtra结构完整
+      state.selectedExtra = state.selectedExtra || {menqing:false, paoyi:false, bixiahu:false};
+      state.selectedFan = state.selectedFan || [];
+      if (!state.title) state.title = '🀄 南京麻将记分记账工作台';
+    }
+  } catch(e){}
+}
+
+/* ================== 渲染 ================== */
+function renderPlayers() {
+  const grid = document.getElementById('playersGrid');
+  grid.innerHTML = state.players.map((p, i) => {
+    const isZhuang = state.zhuang === i;
+    const inYuan = p.score <= 0;
+    p.inYuan = inYuan;
+    const tags = [];
+    if (isZhuang) tags.push('<span class="tag tag-zhuang">庄</span>');
+    if (inYuan) tags.push('<span class="tag tag-yuan">进园子</span>');
+    if (state.mode === 'chang') tags.push('<span class="tag tag-chang">敞</span>');
+    return `
+      <div class="player-card p${i}">
+        <input class="player-name-input" value="${escapeHtml(p.name)}" title="✎ 点击修改玩家名字" placeholder="点击改名" onchange="updateName(${i}, this.value)">
+        <div class="player-score">${p.score.toFixed(0)}</div>
+        <div class="player-tags">${tags.join('')}</div>
+      </div>`;
+  }).join('');
+
+  // 同步下拉
+  const opts = state.players.map((p,i)=>`<option value="${i}">${escapeHtml(p.name)}</option>`).join('');
+  ['huWinner','huDian','gangWho','gangTarget','faWho','zhuangSelect'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+  document.getElementById('zhuangSelect').value = state.zhuang;
+  document.getElementById('roundNum').value = state.round;
+  document.getElementById('unitPrice').value = state.unitPrice;
+  document.getElementById('initScore').value = state.initScore;
+}
+
+function renderFan() {
+  const list = FAN_TYPES[state.mode];
+  const grid = document.getElementById('fanGrid');
+  grid.innerHTML = list.map(f => `
+    <div class="fan-chip ${state.selectedFan.includes(f.key)?'active':''}" data-fan="${f.key}" onclick="toggleFan('${f.key}')">
+      ${f.name}<span class="flower">${f.flower}花</span>
+    </div>`).join('');
+}
+
+function renderExtra() {
+  document.querySelectorAll('.extra-chip').forEach(el => {
+    const k = el.dataset.extra;
+    el.classList.toggle('active', !!state.selectedExtra[k]);
+    // 比下胡根据state.bixia自动勾选
+    if (k === 'bixiahu') {
+      state.selectedExtra.bixiahu = state.bixia;
+      el.classList.toggle('active', state.bixia);
+    }
+    if (k === 'paoyi') {
+      el.querySelector ? null : null;
+      el.firstChild.textContent = state.mode==='jin' ? '跑一（底花10）' : '跑二（底花20）';
+      el.innerHTML = state.mode==='jin' ? '跑一（底花10）' : '跑二（底花20）';
+    }
+    if (k === 'menqing') {
+      el.innerHTML = state.mode==='jin' ? '门清（门一+10）' : '门清（门二+20）';
+    }
+  });
+  document.getElementById('bixiaCard').style.display = state.bixia ? 'block' : 'none';
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    list.innerHTML = '<div class="history-empty">还没有记录，开始第一局吧～</div>';
+    return;
+  }
+  list.innerHTML = state.history.slice().reverse().map(h => {
+    const scores = h.deltas.map((d,i) => {
+      const cls = d>0?'pos':(d<0?'neg':'');
+      return `<span class="${cls}">${escapeHtml(state.players[i].name)}: ${d>0?'+':''}${d.toFixed(0)}</span>`;
+    }).join('');
+    return `
+      <div class="history-item">
+        <div class="h-head">
+          <span>第${h.round}局 · ${h.title}</span>
+          <span style="color:var(--text-light); font-weight:600">${h.amount>0?'¥'+h.amount.toFixed(1):'—'}</span>
+        </div>
+        <div class="h-detail">${escapeHtml(h.detail)}</div>
+        <div class="h-scores">${scores}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderRule() {
+  const isJin = state.mode === 'jin';
+  const door = isJin ? '门一+10花 / 跑一+10花' : '门二+20花 / 跑二+20花';
+  const gang = isJin ? '小杠开花+10 / 大杠开花+20' : '小杠开花+20 / 大杠开花=总花×2';
+  const box = document.getElementById('ruleBox');
+  if (isJin) {
+    box.innerHTML = `
+      <div class="rule-sec"><b>🌸 进园子（门一跑一）</b></div>
+      <div class="rule-sec">• <b>花砸2</b>：硬花+软花总数 ×2</div>
+      <div class="rule-sec">• <b>${door}</b>（门清加花 / 底花加花）</div>
+      <div class="rule-sec">• <b>杠后开花</b>：${gang}</div>
+      <div class="rule-sec">• <b>海底捞月</b>：+20花 ｜ <b>地胡</b>：+30花 ｜ <b>天胡</b>：庄家直接成牌</div>
+      <div class="rule-sec">• <b>比下胡</b>：胡牌总花数 ×2（庄家连庄/流局/包牌/大胡/花杠/罚分触发）</div>
+      <div class="rule-sec">• <b>两家干</b>：两家积分为0时游戏结束</div>
+      <div class="rule-sec">• <b>现场汇</b>：明杠(被杠者付10花) / 暗杠(三家各付5花) / 花杠(三家各付10花)</div>
+      <div class="rule-sec">• <b>包牌</b>：大杠开花、抢杠算自摸；全球独钓、清一色、三打四包为外包</div>
+      <div class="rule-sec">• <b>点炮</b>：点炮人付1份；包牌时点炮人付3份（包三家）</div>
+    `;
+  } else {
+    box.innerHTML = `
+      <div class="rule-sec"><b>🌷 敞开头（456）</b></div>
+      <div class="rule-sec">• <b>花砸2</b>：硬花+软花总数 ×2</div>
+      <div class="rule-sec">• <b>${door}</b>（门清加花 / 底花加花，比进园子翻倍）</div>
+      <div class="rule-sec">• <b>牌型花数</b>：混一色40 / 对对胡40 / 无花果40 / 压绝60 / 清一色50 / 全球独钓50 / 七对60 / 双七对120 / 豪华双七对180 / 超豪华双七对240</div>
+      <div class="rule-sec">• <b>杠后开花</b>：${gang}</div>
+      <div class="rule-sec">• <b>海底捞月</b>：+20花 ｜ <b>地胡</b>：+30花 ｜ <b>天胡</b>：庄家直接成牌</div>
+      <div class="rule-sec">• <b>比下胡</b>：胡牌总花数 ×2（庄家连庄/流局/包牌/大胡/花杠/罚分触发）</div>
+      <div class="rule-sec">• <b>现场汇</b>：明杠(被杠者付10花) / 暗杠(三家各付5花) / 花杠(三家各付10花)</div>
+      <div class="rule-sec">• <b>包牌</b>：大杠开花、抢杠算自摸；全球独钓、清一色、三打四包为外包</div>
+      <div class="rule-sec">• <b>点炮</b>：点炮人付1份；包牌时点炮人付3份（包三家）</div>
+    `;
+  }
+}
+
+/* ================== 交互 ================== */
+function switchMode(m) {
+  state.mode = m;
+  state.selectedFan = [];
+  document.querySelectorAll('.mode-tab').forEach(el => el.classList.toggle('active', el.dataset.mode === m));
+  save();
+  renderAll();
+  updateCalc();
+}
+
+function setQuickPrice(p) {
+  state.unitPrice = p;
+  document.getElementById('unitPrice').value = p;
+  document.querySelectorAll('.quick-price').forEach(el => {
+    el.classList.toggle('active', parseFloat(el.dataset.price) === p);
+  });
+  save();
+  updateCalc();
+  toast('✓ 1花 = ¥' + p);
+}
+
+function switchAction(a) {
+  document.querySelectorAll('.sub-tab').forEach(el => el.classList.toggle('active', el.dataset.action === a));
+  document.querySelectorAll('.action-panel').forEach(el => el.style.display = 'none');
+  document.getElementById('panel-' + a).style.display = 'block';
+  // 点炮显示
+  updateDianVisible();
+}
+
+function updateDianVisible() {
+  const way = document.getElementById('huWay').value;
+  document.getElementById('dianGroup').style.display = (way==='dian' || way==='dianBao') ? 'block' : 'none';
+}
+
+function toggleFan(key) {
+  const idx = state.selectedFan.indexOf(key);
+  if (idx >= 0) state.selectedFan.splice(idx, 1);
+  else state.selectedFan.push(key);
+  save();
+  renderFan();
+  updateCalc();
+}
+
+function toggleExtra(el) {
+  const k = el.dataset.extra;
+  if (k === 'bixiahu') {
+    // 比下胡由全局bixia控制
+    state.bixia = !state.bixia;
+  } else {
+    state.selectedExtra[k] = !state.selectedExtra[k];
+  }
+  save();
+  renderExtra();
+  updateCalc();
+}
+
+function clearBixia() {
+  state.bixia = false;
+  save();
+  renderExtra();
+  updateCalc();
+  toast('已取消比下胡标记');
+}
+
+function updateName(i, name) {
+  state.players[i].name = name || ('玩家'+(i+1));
+  save();
+  renderPlayers();
+}
+
+/* ================== 计算 ================== */
+function calcHu() {
+  const list = FAN_TYPES[state.mode];
+  let fanFlower = 0;
+  state.selectedFan.forEach(k => {
+    const f = list.find(x => x.key === k);
+    if (f) fanFlower += f.flower;
+  });
+
+  const hard = parseInt(document.getElementById('hardFlower').value) || 0;
+  const soft = parseInt(document.getElementById('softFlower').value) || 0;
+  const flowerVal = (hard + soft) * 2; // 花砸2
+
+  let menVal = 0;
+  if (state.selectedExtra.menqing) menVal += (state.mode === 'jin' ? 10 : 20);
+  if (state.selectedExtra.paoyi) menVal += (state.mode === 'jin' ? 10 : 20);
+
+  let extraVal = 0;
+  const extraSel = document.getElementById('extraSelect').value;
+  if (extraSel === 'xiaoGang') extraVal += (state.mode === 'jin' ? 10 : 20);
+  if (extraSel === 'haidi') extraVal += 20;
+  if (extraSel === 'diHu') extraVal += 30;
+  // 大杠开花 = 总花数×2，特殊处理
+
+  let total = fanFlower + flowerVal + menVal + extraVal;
+  if (extraSel === 'daGang') total = total * 2; // 大杠开花总花×2
+  if (extraSel === 'tianHu') {
+    // 天胡直接成牌，另三家直接干，按自摸3份算（不额外加花）
+  }
+
+  const bixia = state.bixia;
+  if (bixia) total = total * 2;
+
+  return { fanFlower, flowerVal, menVal, extraVal, total, bixia, extraSel };
+}
+
+function updateCalc() {
+  updateDianVisible();
+  const c = calcHu();
+  document.getElementById('c-fan').textContent = c.fanFlower + ' 花';
+  document.getElementById('c-flower').textContent = c.flowerVal + ' 花';
+  document.getElementById('c-men').textContent = c.menVal + ' 花';
+  document.getElementById('c-extra').textContent = c.extraVal + (c.extraSel==='daGang'?' (大杠开花×2)':'') + ' 花';
+  document.getElementById('c-bixia').textContent = c.bixia ? '×2' : '×1';
+  document.getElementById('c-total').textContent = c.total + ' 花';
+  const money = c.total * state.unitPrice;
+  document.getElementById('c-money').textContent = '¥' + money.toFixed(1);
+}
+
+/* ================== 结算提交 ================== */
+function confirmHu() {
+  const winnerIdx = parseInt(document.getElementById('huWinner').value);
+  const way = document.getElementById('huWay').value;
+  const c = calcHu();
+  if (c.total === 0 && c.extraSel !== 'tianHu') {
+    toast('请选择牌型或输入花数');
+    return;
+  }
+  const money = c.total * state.unitPrice;
+  const deltas = [0,0,0,0];
+  const winnerName = state.players[winnerIdx].name;
+
+  let detailParts = [];
+  const fanNames = state.selectedFan.map(k => FAN_TYPES[state.mode].find(x=>x.key===k).name).join('+');
+  if (fanNames) detailParts.push(fanNames);
+  if (c.flowerVal > 0) {
+    const hard = document.getElementById('hardFlower').value;
+    const soft = document.getElementById('softFlower').value;
+    detailParts.push(`硬${hard}软${soft}花砸2=${c.flowerVal}花`);
+  }
+  if (c.menVal > 0) detailParts.push(state.selectedExtra.menqing ? (state.mode==='jin'?'门一+10':'门二+20') : '');
+  if (state.selectedExtra.paoyi) detailParts.push(state.mode==='jin'?'跑一+10':'跑二+20');
+  if (c.extraVal > 0 || c.extraSel==='daGang') {
+    const map = {xiaoGang:'小杠开花',daGang:'大杠开花',haidi:'海底捞月',diHu:'地胡',tianHu:'天胡'};
+    detailParts.push(map[c.extraSel] || '');
+  }
+  if (c.bixia) detailParts.push('比下胡×2');
+
+  const wayText = way==='zimo'?'自摸':(way==='dian'?'点炮':'点炮包牌');
+
+  if (way === 'zimo' || c.extraSel === 'tianHu') {
+    // 自摸：三家各付1份
+    for (let i = 0; i < 4; i++) {
+      if (i === winnerIdx) {
+        deltas[i] = money * 3;
+      } else {
+        deltas[i] = -money;
+      }
+    }
+  } else if (way === 'dian') {
+    // 点炮：点炮人付1份
+    const dianIdx = parseInt(document.getElementById('huDian').value);
+    deltas[winnerIdx] = money;
+    deltas[dianIdx] = -money;
+  } else if (way === 'dianBao') {
+    // 包牌：点炮人付3份
+    const dianIdx = parseInt(document.getElementById('huDian').value);
+    deltas[winnerIdx] = money * 3;
+    deltas[dianIdx] = -money * 3;
+  }
+
+  // 应用积分
+  for (let i = 0; i < 4; i++) state.players[i].score += deltas[i];
+
+  // 比下胡触发判断
+  const fanKeys = state.selectedFan;
+  const isBigHu = fanKeys.some(k => ['qingyise','duidui','qudu','qidui','shuangqi','haohua','chaohaohua','hunyise','yajue','wuhuaguo'].includes(k));
+  const isGangHua = c.extraSel === 'xiaoGang' || c.extraSel === 'daGang';
+  if (isBigHu || isGangHua || c.extraSel === 'tianHu' || c.extraSel === 'diHu') {
+    state.bixia = true; // 大胡后下局比下胡
+  }
+
+  const detail = `${winnerName} ${wayText} [${detailParts.filter(Boolean).join(' / ')}] = ${c.total}花 × ${state.unitPrice}元`;
+  state.history.push({
+    round: state.round,
+    title: wayText + ' · ' + winnerName,
+    detail,
+    deltas: deltas.slice(),
+    amount: money * (way==='zimo'||c.extraSel==='tianHu'||way==='dianBao' ? 3 : 1)
+  });
+
+  // 庄家连庄/换庄：胡牌人若不是庄家则下局换庄；庄家胡牌连庄
+  if (winnerIdx !== state.zhuang) {
+    state.zhuang = winnerIdx;
+  }
+  // 自摸或大胡，庄家连庄；闲家胡牌则换庄已在上面处理
+  state.round++;
+
+  // 重置选择
+  state.selectedFan = [];
+  state.selectedExtra = {menqing:false, paoyi:false, bixiahu:false};
+  document.getElementById('hardFlower').value = 0;
+  document.getElementById('softFlower').value = 0;
+  document.getElementById('extraSelect').value = '0';
+
+  save();
+  renderAll();
+  updateCalc();
+  toast('✓ 已结算：' + winnerName + ' +' + deltas[winnerIdx].toFixed(0));
+}
+
+function confirmGang() {
+  const who = parseInt(document.getElementById('gangWho').value);
+  const type = document.getElementById('gangType').value;
+  const target = parseInt(document.getElementById('gangTarget').value);
+  const price = state.unitPrice;
+  const deltas = [0,0,0,0];
+  let detail = '';
+
+  if (type === 'ming') {
+    // 被杠者付10花
+    const m = 10 * price;
+    deltas[who] = m;
+    deltas[target] = -m;
+    detail = `${state.players[who].name} 明杠，${state.players[target].name} 付10花`;
+  } else if (type === 'an') {
+    // 三家各付5花
+    const m = 5 * price;
+    for (let i = 0; i < 4; i++) {
+      if (i === who) deltas[i] = m * 3;
+      else deltas[i] = -m;
+    }
+    detail = `${state.players[who].name} 暗杠，三家各付5花`;
+  } else if (type === 'hua') {
+    // 三家各付10花
+    const m = 10 * price;
+    for (let i = 0; i < 4; i++) {
+      if (i === who) deltas[i] = m * 3;
+      else deltas[i] = -m;
+    }
+    detail = `${state.players[who].name} 花杠，三家各付10花`;
+  }
+
+  for (let i = 0; i < 4; i++) state.players[i].score += deltas[i];
+  // 花杠触发比下胡
+  if (type === 'hua') state.bixia = true;
+
+  state.history.push({
+    round: state.round,
+    title: '现场汇 · 杠',
+    detail,
+    deltas: deltas.slice(),
+    amount: Math.abs(deltas[who])
+  });
+
+  save();
+  renderAll();
+  toast('✓ 杠已结算');
+}
+
+function confirmFa() {
+  const type = document.getElementById('faType').value;
+  const who = parseInt(document.getElementById('faWho').value);
+  const price = state.unitPrice;
+  const deltas = [0,0,0,0];
+  let detail = '';
+
+  if (type === 'same4') {
+    // 首出者付三家各5花
+    const m = 5 * price;
+    for (let i = 0; i < 4; i++) {
+      if (i === who) deltas[i] = -m * 3;
+      else deltas[i] = m;
+    }
+    detail = `${state.players[who].name} 四家同牌，付三家各5花`;
+  } else {
+    // 东南西北，收者得三家各5花
+    const m = 5 * price;
+    for (let i = 0; i < 4; i++) {
+      if (i === who) deltas[i] = m * 3;
+      else deltas[i] = -m;
+    }
+    detail = `${state.players[who].name} 集齐东南西北，三家各付5花`;
+  }
+
+  for (let i = 0; i < 4; i++) state.players[i].score += deltas[i];
+  state.bixia = true; // 罚分触发比下胡
+
+  state.history.push({
+    round: state.round,
+    title: '现场汇 · 罚分',
+    detail,
+    deltas: deltas.slice(),
+    amount: Math.abs(deltas[who])
+  });
+
+  save();
+  renderAll();
+  toast('✓ 罚分已结算');
+}
+
+function confirmLiu() {
+  const type = document.getElementById('liuType').value;
+  if (type === 'liu') {
+    state.bixia = true;
+    toast('✓ 流局，下局比下胡');
+  } else if (type === 'lianzhuang') {
+    state.bixia = true;
+    toast('✓ 庄家连庄，下局比下胡');
+  } else {
+    state.bixia = false;
+    toast('✓ 已取消比下胡标记');
+  }
+  // 流局不换庄
+  if (type === 'liu') {
+    state.round++;
+  }
+  save();
+  renderAll();
+}
+
+function nextRound() {
+  state.zhuang = (state.zhuang + 1) % 4;
+  state.round++;
+  save();
+  renderAll();
+  toast('▶ 第' + state.round + '局，庄家：' + state.players[state.zhuang].name);
+}
+
+/* ================== 结算 / 导出 ================== */
+function showSettle() {
+  const sorted = state.players.map((p,i)=>({i, name:p.name, score:p.score}))
+    .sort((a,b)=>b.score-a.score);
+  const initTotal = state.initScore * 4;
+  const curTotal = state.players.reduce((s,p)=>s+p.score, 0);
+  const body = document.getElementById('settleBody');
+  body.innerHTML = sorted.map((p, idx) => {
+    const diff = p.score - state.initScore;
+    const cls = diff >= 0 ? 'win' : 'lose';
+    const sign = diff >= 0 ? '+' : '';
+    return `<div class="settle-row ${cls}">
+      <div>
+        <span class="name">${idx+1}. ${escapeHtml(p.name)}</span>
+        ${state.zhuang===p.i?'<span class="tag tag-zhuang" style="margin-left:6px">庄</span>':''}
+      </div>
+      <div class="amount">${sign}${diff.toFixed(0)}</div>
+    </div>`;
+  }).join('') + `<div style="margin-top:12px; font-size:12px; color:var(--text-light); text-align:center">
+    总分合计：${curTotal.toFixed(0)} / 初始 ${initTotal}（差额为抽水或计算误差）</div>`;
+  document.getElementById('settleModal').classList.add('show');
+}
+
+function exportHistory() {
+  let text = `南京麻将记分记账记录\n`;
+  text += `模式：${state.mode==='jin'?'进园子（门一跑一）':'敞开头（门二跑二）'}\n`;
+  text += `单价：${state.unitPrice}元/花  起始分：${state.initScore}\n`;
+  text += `${'='.repeat(40)}\n`;
+  state.players.forEach((p,i) => {
+    text += `${p.name}\t${p.score}\t${state.zhuang===i?'(庄)':''}\n`;
+  });
+  text += `${'='.repeat(40)}\n`;
+  state.history.forEach(h => {
+    text += `\n【第${h.round}局】${h.title}\n`;
+    text += `  ${h.detail}\n`;
+    text += `  变动：`;
+    h.deltas.forEach((d,i) => { text += `${state.players[i].name}${d>=0?'+':''}${d.toFixed(0)}  `; });
+    text += `\n`;
+  });
+  text += `\n${'='.repeat(40)}\n最终结算：\n`;
+  state.players.map((p,i)=>({name:p.name, score:p.score})).sort((a,b)=>b.score-a.score).forEach((p,idx) => {
+    text += `${idx+1}. ${p.name}\t${p.score}\n`;
+  });
+  document.getElementById('exportText').value = text;
+  document.getElementById('exportModal').classList.add('show');
+}
+
+function copyExport() {
+  const ta = document.getElementById('exportText');
+  ta.select();
+  try {
+    document.execCommand('copy');
+    toast('✓ 已复制到剪贴板');
+  } catch(e) {
+    toast('复制失败，请手动选择');
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+/* ================== 工具 ================== */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function resetAll() {
+  if (!confirm('确定重置所有数据？历史记录将清空，积分恢复初始值。')) return;
+  const init = state.initScore;
+  state.players = state.players.map(p => ({...p, score: init, inYuan:false}));
+  state.history = [];
+  state.zhuang = 0;
+  state.round = 1;
+  state.bixia = false;
+  state.selectedFan = [];
+  state.selectedExtra = {menqing:false, paoyi:false, bixiahu:false};
+  save();
+  renderAll();
+  updateCalc();
+  toast('✓ 已重置');
+}
+
+/* ================== 设置变更监听 ================== */
+document.getElementById('unitPrice').addEventListener('change', e => {
+  state.unitPrice = parseFloat(e.target.value) || 1;
+  save();
+  syncQuickButtons();
+  updateCalc();
+});
+document.getElementById('initScore').addEventListener('change', e => {
+  state.initScore = parseInt(e.target.value) || 100;
+  save();
+});
+document.getElementById('zhuangSelect').addEventListener('change', e => {
+  state.zhuang = parseInt(e.target.value);
+  save();
+  renderPlayers();
+});
+document.getElementById('roundNum').addEventListener('change', e => {
+  state.round = parseInt(e.target.value) || 1;
+  save();
+});
+
+/* ================== 渲染全部 ================== */
+function renderAll() {
+  renderPlayers();
+  renderFan();
+  renderExtra();
+  renderHistory();
+  renderRule();
+}
+
+/* ================== 同步快捷按钮状态 ================== */
+function syncQuickButtons() {
+  // 快捷金额
+  document.querySelectorAll('.quick-price').forEach(el => {
+    el.classList.toggle('active', parseFloat(el.dataset.price) === state.unitPrice);
+  });
+}
+
+/* ================== 标题编辑 ================== */
+function initTitle() {
+  const el = document.getElementById('mainTitle');
+  el.textContent = state.title;
+  el.addEventListener('blur', () => {
+    let t = el.textContent.trim();
+    if (!t) t = '🀄 南京麻将记分记账工作台';
+    state.title = t;
+    el.textContent = t;
+    save();
+    toast('✓ 工作台名称已保存');
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  });
+}
+
+/* ================== 初始化 ================== */
+load();
+initTitle();
+syncQuickButtons();
+renderAll();
+updateCalc();
+</script>
+</body>
+</html>
